@@ -4,3 +4,6 @@
 
 # data (private)
 data/*
+
+# not important
+src/__pycache__/*
