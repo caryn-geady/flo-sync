@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-import pandas as pd
+import pandas as pd, numpy as np
+from scipy import stats
 
 
 def build_analysis_df(fp_data, labchart_data, remove_invalid=True):
@@ -48,3 +49,46 @@ def build_analysis_df(fp_data, labchart_data, remove_invalid=True):
         analysis_df = analysis_df[(analysis_df['CO'] > 0) & (analysis_df['VTI'] > 0)].copy()
     
     return analysis_df
+
+
+def _stage_metrics(group):
+    """
+    Calculate summary statistics for a group of data.
+
+    INPUT:
+        group: pd.DataFrame, a subset of the analysis DataFrame.
+
+    OUTPUT:
+        pd.Series, containing the summary statistics.
+    """
+    x = group['CO'].to_numpy()
+    y = group['VTI'].to_numpy()
+    n = len(group)
+
+    out = {
+        'n': n,
+        'pearson_r': np.nan,
+        'pearson_p': np.nan,
+        'spearman_rho': np.nan,
+        'spearman_p': np.nan,
+        'slope': np.nan,
+        'intercept': np.nan,
+        'R2': np.nan,
+    }
+
+    if n >= 3 and np.std(x) > 0 and np.std(y) > 0:
+        pearson_r, pearson_p = stats.pearsonr(x, y)
+        spearman_rho, spearman_p = stats.spearmanr(x, y)
+        reg = stats.linregress(x, y)
+
+        out.update({
+            'pearson_r': pearson_r,
+            'pearson_p': pearson_p,
+            'spearman_rho': spearman_rho,
+            'spearman_p': spearman_p,
+            'slope': reg.slope,
+            'intercept': reg.intercept,
+            'R2': reg.rvalue ** 2,
+        })
+
+    return pd.Series(out)
