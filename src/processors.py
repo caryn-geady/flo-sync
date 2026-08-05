@@ -186,3 +186,61 @@ def get_stage_offset(stage, fp_data, labchart_data, fp_time_col='Corrected Time 
     print("-" * 50)
     
     return calculated_time_delay
+
+# -----------------------------------------------
+# OUTLIER DETECTION AND REMOVAL (TIME-PERMITTING)
+# -----------------------------------------------
+
+
+# def _infer_window_size(n, min_window=25, max_fraction=0.10, scale=4.0):
+#     if n <= 0:
+#         return 1
+#     if n <= min_window:
+#         return n
+#     upper = max(min_window, int(n * max_fraction))
+#     proposed = int(scale * np.sqrt(n))
+#     return int(np.clip(proposed, min_window, upper))
+
+# def _rolling_hr_robust_stats(df, hr_col='HR', window_size=None, std_devs=3.5, mad_scale=1.4826):
+#     n = len(df)
+#     effective_window = _infer_window_size(n) if window_size is None else min(int(window_size), max(n, 1))
+#     hr = df[hr_col].astype(float)
+
+#     hr_median = hr.rolling(window=effective_window, min_periods=1).median()
+
+#     abs_dev = (hr - hr_median).abs()
+#     hr_mad = abs_dev.rolling(window=effective_window, min_periods=1).median()
+#     hr_scale = mad_scale * hr_mad
+
+#     # avoid zero-width bands in flat regions
+#     positive_scale = hr_scale[hr_scale > 0]
+#     fallback_scale = positive_scale.median() if not positive_scale.empty else 1.0
+#     hr_scale = hr_scale.where(hr_scale > 0, fallback_scale)
+
+#     lower = hr_median - std_devs * hr_scale
+#     upper = hr_median + std_devs * hr_scale
+#     mask = hr.between(lower, upper)
+#     return hr_median, hr_scale, mask, effective_window
+
+# def filter_hr_outliers(df, hr_col='HR', window_size=None, std_devs=3):
+#     hr_center, hr_scale, mask, effective_window = _rolling_hr_robust_stats(
+#         df, hr_col=hr_col, window_size=window_size, std_devs=std_devs
+#     )
+#     filtered_data = df.loc[mask].copy()
+#     return filtered_data, hr_center, hr_scale, mask, effective_window
+
+# def _plot_removals(df, time_col, hr_col='HR', window_size=None, std_devs=3, ax=None, title=None):
+#     hr_center, hr_scale, mask, effective_window = _rolling_hr_robust_stats(
+#         df, hr_col=hr_col, window_size=window_size, std_devs=std_devs
+#     )
+
+#     if ax is None:
+#         fig, ax = plt.subplots(figsize=(8,3))
+#     ax.scatter(df.loc[mask, time_col], df.loc[mask, hr_col], s=1, c='tab:blue', label='kept', alpha=0.6)
+#     ax.scatter(df.loc[~mask, time_col], df.loc[~mask, hr_col], s=6, c='red', label='removed', alpha=0.8)
+#     ax.set_xlabel(time_col)
+#     ax.set_ylabel(hr_col)
+#     if title:
+#         ax.set_title(f"{title} (MAD, window={effective_window})")
+#     sns.despine()
+#     ax.legend()
